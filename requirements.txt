@@ -1,0 +1,3 @@
+requests>=2.31.0
+# optional: only needed for --attachments (PDF text extraction)
+pypdf>=4.0.0

@@ -1,0 +1,21 @@
+# Never commit env files or keys
+.env
+*.key
+secrets.*
+
+# Downloaded extracts and run output
+*.csv
+hits.json
+*.log
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+build/
+dist/
+*.egg-info/
+
+# OS noise
+.DS_Store
+Thumbs.db

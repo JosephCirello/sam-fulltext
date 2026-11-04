@@ -1,0 +1,16 @@
+# One phrase per line. Everything after a # is a comment.
+#
+# Matching is on word boundaries, an optional trailing "s" is allowed, and
+# spaces and hyphens are interchangeable. So "red team" below also matches
+# "red-team" and "red teams", but not "red teaming" unless you add it.
+#
+# These are examples so the tool runs out of the box. Replace them with the
+# phrases that matter to you.
+
+artificial intelligence
+machine learning
+large language model
+red team
+penetration test
+vulnerability assessment
+independent verification and validation
