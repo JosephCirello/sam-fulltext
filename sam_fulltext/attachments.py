@@ -1,29 +1,25 @@
 """
-sam_attachments.py — read the attachments where the real requirement lives.
+attachments.py — read the attachments where the real requirement lives.
 
-WHY (deep dive 2026-10-23). Of 205 live notices sam.gov's own full-text search
-returned for one set of search phrases, 97 carried the phrase NOWHERE in the title
-or the description: it was in a PDF -- the PWS, the SOW, the amendment. The
-extract has no attachment column and the API never read one. A notice whose
-description says "see attached Performance Work Statement" is, to a
-description-only matcher, a notice about nothing.
+WHY. Of 205 live notices sam.gov's own full-text search returned for one set
+of search phrases, 97 carried the phrase NOWHERE in the title or the
+description: it was in a PDF -- the PWS, the SOW, the amendment. The daily
+extract has no attachment column. A notice whose description says "see
+attached Performance Work Statement" is, to a description-only matcher, a
+notice about nothing.
 
-WHAT. For a bounded set of candidates per run, list the notice's public
-attachments through sam.gov's own (keyless, undocumented) resources endpoint,
-download the ones that can carry text (PDF, DOCX, TXT) within a size cap, pull
-the text, and hand it back so assign_tier can score the notice on it. The
-tier decided from an attachment says so in `why_matched`.
+WHAT. For each notice the CLI hands it (the first --attach-max matches of a
+run), list the notice's public attachments through sam.gov's own keyless,
+undocumented resources endpoint, download the ones that can carry text (PDF,
+DOCX, TXT) within a size cap, pull the text and return it, so the caller can
+match its phrases against the attachment as well as the description.
 
-WHO IS A CANDIDATE. Reading every attachment on SAM.gov is thousands of PDFs a
-day. The run reads two groups: (1) notices already tiered from their text, so
-the attachment can sharpen the score and the reasons; (2) notices NOT tiered
-whose description is thin or points at an attachment, and whose NAICS, PSC or
-notice type says the requirement could be ours. Everything is capped
-(SAM_ATTACH_MAX notices, SAM_ATTACH_SECONDS wall clock, SAM_ATTACH_PER_NOTICE
-files, SAM_ATTACH_MAX_BYTES per file) and the run prints what it read and what
-the caps left unread. A cap that is hit is REPORTED, never silent.
+CAPS. Reading every attachment on SAM.gov would be thousands of PDFs a day, so
+everything is bounded: SAM_ATTACH_PER_NOTICE files per notice,
+SAM_ATTACH_MAX_BYTES per file, SAM_ATTACH_MAX_CHARS returned. A cap that is hit
+is REPORTED on stderr, never silent.
 
-Endpoints (measured 2026-10-23 from a plain client, no cookie, no key):
+Endpoints (measured from a plain client, no cookie, no key):
   GET https://sam.gov/api/prod/opps/v3/opportunities/{id}/resources
       -> _embedded.opportunityAttachmentList[].attachments[]
          {resourceId, name, mimeType, size, accessLevel, deletedFlag}
@@ -59,10 +55,9 @@ def _env_int(name, default):
 
 def caps():
     return {
-        # Measured 2026-10-23 live: 3.4 s per notice (23 files, 635,243 chars for
-        # 12 notices); a 3-day window had 439 candidates. 150 notices in ~9 min
-        # reads every tiered notice and the best-ranked thin ones; the rest are
-        # counted as UNREAD in the log line.
+        # Measured live: about 3.4 s per notice (23 files, 635,243 chars for
+        # 12 notices). The CLI's --attach-max decides how many notices are read;
+        # these caps bound what is read for each one.
         "max_notices": _env_int("SAM_ATTACH_MAX", 150),
         "seconds": _env_int("SAM_ATTACH_SECONDS", 540),
         "per_notice": _env_int("SAM_ATTACH_PER_NOTICE", 3),
